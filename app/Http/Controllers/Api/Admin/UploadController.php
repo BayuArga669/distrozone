@@ -7,50 +7,59 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Intervention\Image\ImageManager;
-use Intervention\Image\Drivers\Gd\Driver;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class UploadController extends Controller
 {
     public function uploadImage(Request $request): JsonResponse
     {
         $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // Max 5MB before compression
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // Max 5MB
             'folder' => 'nullable|string|in:products,categories,variants',
         ]);
 
         $folder = $request->get('folder', 'products');
         $file = $request->file('image');
 
-        // Generate unique filename with .webp extension
-        $filename = Str::random(20) . '.webp';
+        try {
+            // Check if Cloudinary is configured
+            if (config('cloudinary.cloud_url')) {
+                // Upload to Cloudinary
+                $uploadedFileUrl = Cloudinary::upload($file->getRealPath(), [
+                    'folder' => 'distrozone/' . $folder,
+                    'format' => 'webp',
+                    'quality' => 'auto:good',
+                    'fetch_format' => 'auto',
+                    'transformation' => [
+                        ['width' => 1200, 'crop' => 'limit']
+                    ]
+                ])->getSecurePath();
 
-        // Create image manager with GD driver
-        $manager = new ImageManager(new Driver());
+                return response()->json([
+                    'message' => 'Image uploaded successfully',
+                    'url' => $uploadedFileUrl,
+                    'path' => $uploadedFileUrl,
+                ]);
+            } else {
+                // Fallback to local storage (for development)
+                $filename = Str::random(20) . '.webp';
+                $path = $folder . '/' . $filename;
 
-        // Read and optimize image
-        $image = $manager->read($file->getRealPath());
+                // Simple store without optimization for fallback
+                $file->storeAs($folder, $filename, 'public');
+                $url = url(Storage::url($path));
 
-        // Resize if too large (max 1200px width, maintain aspect ratio)
-        if ($image->width() > 1200) {
-            $image->scale(width: 1200);
+                return response()->json([
+                    'message' => 'Image uploaded successfully (local)',
+                    'url' => $url,
+                    'path' => '/storage/' . $path,
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to upload: ' . $e->getMessage(),
+            ], 500);
         }
-
-        // Convert to WebP and compress (quality 80%)
-        $encodedImage = $image->toWebp(quality: 80);
-
-        // Store the optimized image
-        $path = $folder . '/' . $filename;
-        Storage::disk('public')->put($path, $encodedImage);
-
-        // Generate full URL with domain
-        $url = url(Storage::url($path));
-
-        return response()->json([
-            'message' => 'Image uploaded and optimized successfully',
-            'url' => $url,
-            'path' => $path,
-        ]);
     }
 
     public function deleteImage(Request $request): JsonResponse
@@ -61,14 +70,30 @@ class UploadController extends Controller
 
         $path = $request->path;
 
-        // Remove leading /storage/ if present
-        $path = str_replace('/storage/', '', $path);
+        try {
+            // Check if it's a Cloudinary URL
+            if (str_contains($path, 'cloudinary.com')) {
+                // Extract public_id from Cloudinary URL
+                preg_match('/\/distrozone\/(.+)\.\w+$/', $path, $matches);
+                if (isset($matches[1])) {
+                    $publicId = 'distrozone/' . $matches[1];
+                    Cloudinary::destroy($publicId);
+                }
+                return response()->json(['message' => 'Image deleted successfully']);
+            }
 
-        if (Storage::disk('public')->exists($path)) {
-            Storage::disk('public')->delete($path);
-            return response()->json(['message' => 'Image deleted successfully']);
+            // Fallback: Local storage delete
+            $path = str_replace('/storage/', '', $path);
+            if (Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
+                return response()->json(['message' => 'Image deleted successfully']);
+            }
+
+            return response()->json(['message' => 'Image not found'], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to delete: ' . $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json(['message' => 'Image not found'], 404);
     }
 }
