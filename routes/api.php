@@ -69,6 +69,13 @@ Route::prefix('v1')->group(function () {
         Route::get('/orders/{id}', [OrderController::class, 'show']);
         Route::post('/orders', [OrderController::class, 'store']);
 
+        // Wishlist
+        Route::get('/wishlist', [App\Http\Controllers\Api\WishlistController::class, 'index']);
+        Route::post('/wishlist', [App\Http\Controllers\Api\WishlistController::class, 'store']);
+        Route::post('/wishlist/toggle', [App\Http\Controllers\Api\WishlistController::class, 'toggle']);
+        Route::get('/wishlist/check/{productId}', [App\Http\Controllers\Api\WishlistController::class, 'check']);
+        Route::delete('/wishlist/{productId}', [App\Http\Controllers\Api\WishlistController::class, 'destroy']);
+
         // Admin Routes
         Route::prefix('admin')->group(function () {
             // Dashboard
