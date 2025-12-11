@@ -7,7 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Illuminate\Support\Facades\Log;
 
 class UploadController extends Controller
 {
@@ -22,30 +22,57 @@ class UploadController extends Controller
         $file = $request->file('image');
 
         try {
+            $cloudinaryUrl = env('CLOUDINARY_URL');
+
             // Check if Cloudinary is configured
-            if (config('cloudinary.cloud_url')) {
+            if ($cloudinaryUrl && str_contains($cloudinaryUrl, 'cloudinary://')) {
+                // Parse CLOUDINARY_URL
+                // Format: cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+                preg_match('/cloudinary:\/\/([^:]+):([^@]+)@(.+)/', $cloudinaryUrl, $matches);
+
+                if (count($matches) !== 4) {
+                    throw new \Exception('Invalid CLOUDINARY_URL format');
+                }
+
+                $apiKey = $matches[1];
+                $apiSecret = $matches[2];
+                $cloudName = $matches[3];
+
+                // Configure Cloudinary
+                \Cloudinary\Configuration\Configuration::instance([
+                    'cloud' => [
+                        'cloud_name' => $cloudName,
+                        'api_key' => $apiKey,
+                        'api_secret' => $apiSecret
+                    ],
+                    'url' => [
+                        'secure' => true
+                    ]
+                ]);
+
                 // Upload to Cloudinary
-                $uploadedFileUrl = Cloudinary::upload($file->getRealPath(), [
+                $uploadApi = new \Cloudinary\Api\Upload\UploadApi();
+                $result = $uploadApi->upload($file->getRealPath(), [
                     'folder' => 'distrozone/' . $folder,
                     'format' => 'webp',
                     'quality' => 'auto:good',
-                    'fetch_format' => 'auto',
                     'transformation' => [
                         ['width' => 1200, 'crop' => 'limit']
                     ]
-                ])->getSecurePath();
+                ]);
+
+                $secureUrl = $result['secure_url'];
 
                 return response()->json([
                     'message' => 'Image uploaded successfully',
-                    'url' => $uploadedFileUrl,
-                    'path' => $uploadedFileUrl,
+                    'url' => $secureUrl,
+                    'path' => $secureUrl,
                 ]);
             } else {
                 // Fallback to local storage (for development)
-                $filename = Str::random(20) . '.webp';
+                $filename = Str::random(20) . '.' . $file->getClientOriginalExtension();
                 $path = $folder . '/' . $filename;
 
-                // Simple store without optimization for fallback
                 $file->storeAs($folder, $filename, 'public');
                 $url = url(Storage::url($path));
 
@@ -56,6 +83,7 @@ class UploadController extends Controller
                 ]);
             }
         } catch (\Exception $e) {
+            Log::error('Upload error: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Failed to upload: ' . $e->getMessage(),
             ], 500);
@@ -73,11 +101,28 @@ class UploadController extends Controller
         try {
             // Check if it's a Cloudinary URL
             if (str_contains($path, 'cloudinary.com')) {
-                // Extract public_id from Cloudinary URL
-                preg_match('/\/distrozone\/(.+)\.\w+$/', $path, $matches);
-                if (isset($matches[1])) {
-                    $publicId = 'distrozone/' . $matches[1];
-                    Cloudinary::destroy($publicId);
+                $cloudinaryUrl = env('CLOUDINARY_URL');
+
+                if ($cloudinaryUrl) {
+                    preg_match('/cloudinary:\/\/([^:]+):([^@]+)@(.+)/', $cloudinaryUrl, $matches);
+
+                    if (count($matches) === 4) {
+                        \Cloudinary\Configuration\Configuration::instance([
+                            'cloud' => [
+                                'cloud_name' => $matches[3],
+                                'api_key' => $matches[1],
+                                'api_secret' => $matches[2]
+                            ]
+                        ]);
+
+                        // Extract public_id from URL
+                        preg_match('/\/distrozone\/[^\/]+\/([^\.]+)/', $path, $urlMatches);
+                        if (isset($urlMatches[1])) {
+                            $publicId = 'distrozone/' . $folder . '/' . $urlMatches[1];
+                            $uploadApi = new \Cloudinary\Api\Upload\UploadApi();
+                            $uploadApi->destroy($publicId);
+                        }
+                    }
                 }
                 return response()->json(['message' => 'Image deleted successfully']);
             }
@@ -91,6 +136,7 @@ class UploadController extends Controller
 
             return response()->json(['message' => 'Image not found'], 404);
         } catch (\Exception $e) {
+            Log::error('Delete error: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Failed to delete: ' . $e->getMessage(),
             ], 500);
