@@ -1,0 +1,15 @@
+{
+    "transaction_time": "2025-12-10 16:34:00",
+    "transaction_status": "settlement",
+    "transaction_id": "test-gopay-123",
+    "status_message": "success",
+    "status_code": "200",
+    "signature_key": "dummy-signature",
+    "settlement_time": "2025-12-10 16:34:05",
+    "payment_type": "gopay",
+    "order_id": "ORD-69393E83777BF",
+    "merchant_id": "test-merchant",
+    "gross_amount": "54000.00",
+    "fraud_status": "accept",
+    "currency": "IDR"
+}
