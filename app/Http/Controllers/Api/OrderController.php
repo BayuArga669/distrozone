@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
+use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\MidtransService;
@@ -49,6 +50,7 @@ class OrderController extends Controller
             'shipping_address.postal_code' => 'required|string|max:10',
             'notes' => 'nullable|string|max:500',
             'shipping_cost' => 'nullable|numeric|min:0',
+            'coupon_code' => 'nullable|string|max:50',
             'payment_method' => 'required|string|in:gopay,dana,ovo,shopeepay,credit_card,bca_va,bni_va,bri_va,mandiri_va,cod',
         ]);
 
@@ -85,15 +87,56 @@ class OrderController extends Controller
         try {
             $subtotal = $cart->total;
             $shippingCost = $validated['shipping_cost'] ?? 0;
-            $total = $subtotal + $shippingCost;
+            $discountAmount = 0;
+            $couponId = null;
+            $couponCode = null;
+
+            // Apply coupon if provided
+            if (!empty($validated['coupon_code'])) {
+                $coupon = Coupon::where('code', strtoupper($validated['coupon_code']))->first();
+
+                if (!$coupon) {
+                    return response()->json([
+                        'message' => 'Kode kupon tidak ditemukan',
+                    ], 400);
+                }
+
+                if (!$coupon->canBeUsed($subtotal)) {
+                    $message = 'Kode kupon tidak valid';
+
+                    if (!$coupon->is_active) {
+                        $message = 'Kode kupon tidak aktif';
+                    } elseif ($coupon->expires_at && now()->isAfter($coupon->expires_at)) {
+                        $message = 'Kode kupon sudah kadaluarsa';
+                    } elseif ($coupon->max_uses !== null && $coupon->used_count >= $coupon->max_uses) {
+                        $message = 'Kode kupon sudah mencapai batas pemakaian';
+                    } elseif ($subtotal < $coupon->min_order) {
+                        $message = sprintf(
+                            'Minimal belanja Rp %s untuk menggunakan kupon ini',
+                            number_format($coupon->min_order, 0, ',', '.')
+                        );
+                    }
+
+                    return response()->json(['message' => $message], 400);
+                }
+
+                $discountAmount = $coupon->calculateDiscount($subtotal);
+                $couponId = $coupon->id;
+                $couponCode = $coupon->code;
+            }
+
+            $total = $subtotal + $shippingCost - $discountAmount;
             $paymentMethod = $validated['payment_method'];
 
             // Create order
             $order = Order::create([
                 'user_id' => $request->user()->id,
+                'coupon_id' => $couponId,
+                'coupon_code' => $couponCode,
                 'status' => Order::STATUS_UNPAID,
                 'subtotal' => $subtotal,
                 'shipping_cost' => $shippingCost,
+                'discount_amount' => $discountAmount,
                 'total' => $total,
                 'shipping_address' => $validated['shipping_address'],
                 'payment_method' => $paymentMethod,
@@ -126,6 +169,11 @@ class OrderController extends Controller
 
             // Clear cart
             $cart->items()->delete();
+
+            // Increment coupon usage if coupon was used
+            if ($couponId) {
+                $coupon->incrementUsage();
+            }
 
             // Handle payment based on method
             $order->load('items.product', 'user');

@@ -80,5 +80,21 @@ class User extends Authenticatable
     {
         return $this->role === 'admin';
     }
+
+    /**
+     * Get the user's addresses.
+     */
+    public function addresses()
+    {
+        return $this->hasMany(Address::class);
+    }
+
+    /**
+     * Get the user's reviews.
+     */
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
 }
 

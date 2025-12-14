@@ -18,16 +18,19 @@ class Product extends Model
         'slug',
         'description',
         'price',
+        'cost_price',
         'stock',
         'image',
         'images',
         'color',
+        'gender',
         'is_active',
         'is_featured',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
+        'cost_price' => 'decimal:2',
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
         'images' => 'array',
@@ -64,6 +67,16 @@ class Product extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function approvedReviews(): HasMany
+    {
+        return $this->hasMany(Review::class)->where('is_approved', true);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
@@ -76,7 +89,7 @@ class Product extends Model
 
     public function getPriceFormattedAttribute(): string
     {
-        return 'Rp ' . number_format($this->price, 0, ',', '.');
+        return 'Rp ' . number_format((float) $this->price, 0, ',', '.');
     }
 
     /**
@@ -123,6 +136,51 @@ class Product extends Model
     public function hasVariants(): bool
     {
         return $this->variants()->exists();
+    }
+
+    /**
+     * Get average rating from approved reviews
+     */
+    public function getAverageRatingAttribute(): float
+    {
+        return round($this->approvedReviews()->avg('rating') ?? 0, 1);
+    }
+
+    /**
+     * Get total count of approved reviews
+     */
+    public function getTotalReviewsAttribute(): int
+    {
+        return $this->approvedReviews()->count();
+    }
+
+    /**
+     * Get rating distribution (count of each star rating)
+     */
+    public function getRatingDistributionAttribute(): array
+    {
+        $distribution = [];
+        for ($i = 5; $i >= 1; $i--) {
+            $distribution[$i] = $this->approvedReviews()->where('rating', $i)->count();
+        }
+        return $distribution;
+    }
+
+    /**
+     * Get percentage distribution of ratings
+     */
+    public function getRatingPercentagesAttribute(): array
+    {
+        $total = $this->total_reviews;
+        if ($total === 0) {
+            return [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
+        }
+
+        $percentages = [];
+        foreach ($this->rating_distribution as $rating => $count) {
+            $percentages[$rating] = round(($count / $total) * 100);
+        }
+        return $percentages;
     }
 }
 

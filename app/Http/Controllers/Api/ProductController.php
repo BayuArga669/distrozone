@@ -37,6 +37,11 @@ class ProductController extends Controller
                 $query->where('name', 'like', '%' . $request->search . '%');
             }
 
+            // Gender Filter
+            if ($request->has('gender') && in_array($request->gender, ['men', 'women', 'unisex'])) {
+                $query->where('gender', $request->gender);
+            }
+
             // Sort
             $sortBy = $request->get('sort', 'created_at');
             $sortOrder = $request->get('order', 'desc');
@@ -79,6 +84,11 @@ class ProductController extends Controller
                     ])
                     ->values();
             }
+
+            // Add review statistics
+            $product->average_rating = $product->average_rating;
+            $product->total_reviews = $product->total_reviews;
+            $product->rating_distribution = $product->rating_distribution;
 
             return $product;
         });

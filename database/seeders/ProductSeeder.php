@@ -20,6 +20,7 @@ class ProductSeeder extends Seeder
                 'price' => 149000,
                 'stock' => 50,
                 'color' => '#cbd5e1',
+                'gender' => 'unisex',
                 'is_featured' => true,
             ],
             [
@@ -29,6 +30,7 @@ class ProductSeeder extends Seeder
                 'price' => 99000,
                 'stock' => 100,
                 'color' => '#f8fafc',
+                'gender' => 'unisex',
                 'is_featured' => false,
             ],
             [
@@ -38,6 +40,7 @@ class ProductSeeder extends Seeder
                 'price' => 179000,
                 'stock' => 30,
                 'color' => '#1e293b',
+                'gender' => 'men',
                 'is_featured' => true,
             ],
             // Pants
@@ -48,6 +51,7 @@ class ProductSeeder extends Seeder
                 'price' => 299000,
                 'stock' => 40,
                 'color' => '#94a3b8',
+                'gender' => 'men',
                 'is_featured' => true,
             ],
             [
@@ -57,6 +61,7 @@ class ProductSeeder extends Seeder
                 'price' => 279000,
                 'stock' => 35,
                 'color' => '#78716c',
+                'gender' => 'men',
                 'is_featured' => false,
             ],
             // Outerwear
@@ -67,6 +72,7 @@ class ProductSeeder extends Seeder
                 'price' => 499000,
                 'stock' => 25,
                 'color' => '#64748b',
+                'gender' => 'unisex',
                 'is_featured' => true,
             ],
             [
@@ -76,6 +82,7 @@ class ProductSeeder extends Seeder
                 'price' => 549000,
                 'stock' => 20,
                 'color' => '#1e293b',
+                'gender' => 'unisex',
                 'is_featured' => false,
             ],
             // Accessories
@@ -86,6 +93,7 @@ class ProductSeeder extends Seeder
                 'price' => 89000,
                 'stock' => 60,
                 'color' => '#475569',
+                'gender' => 'unisex',
                 'is_featured' => true,
             ],
             [
@@ -95,6 +103,7 @@ class ProductSeeder extends Seeder
                 'price' => 129000,
                 'stock' => 45,
                 'color' => '#e2e8f0',
+                'gender' => 'women',
                 'is_featured' => false,
             ],
             // Hoodies
@@ -105,6 +114,7 @@ class ProductSeeder extends Seeder
                 'price' => 349000,
                 'stock' => 30,
                 'color' => '#334155',
+                'gender' => 'unisex',
                 'is_featured' => true,
             ],
             [
@@ -114,6 +124,7 @@ class ProductSeeder extends Seeder
                 'price' => 389000,
                 'stock' => 25,
                 'color' => '#0f172a',
+                'gender' => 'unisex',
                 'is_featured' => false,
             ],
             // Shorts
@@ -124,6 +135,7 @@ class ProductSeeder extends Seeder
                 'price' => 199000,
                 'stock' => 45,
                 'color' => '#e2e8f0',
+                'gender' => 'men',
                 'is_featured' => false,
             ],
         ];
@@ -140,6 +152,7 @@ class ProductSeeder extends Seeder
                     'price' => $productData['price'],
                     'stock' => $productData['stock'],
                     'color' => $productData['color'],
+                    'gender' => $productData['gender'],
                     'is_active' => true,
                     'is_featured' => $productData['is_featured'],
                 ]);

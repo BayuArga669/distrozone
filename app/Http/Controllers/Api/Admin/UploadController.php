@@ -15,7 +15,7 @@ class UploadController extends Controller
     {
         $request->validate([
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // Max 5MB
-            'folder' => 'nullable|string|in:products,categories,variants',
+            'folder' => 'nullable|string|in:products,categories,variants,posts',
         ]);
 
         $folder = $request->get('folder', 'products');

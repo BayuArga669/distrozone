@@ -14,10 +14,13 @@ class Order extends Model
 
     protected $fillable = [
         'user_id',
+        'coupon_id',
+        'coupon_code',
         'order_number',
         'status',
         'subtotal',
         'shipping_cost',
+        'discount_amount',
         'total',
         'shipping_address',
         'payment_method',
@@ -28,6 +31,7 @@ class Order extends Model
     protected $casts = [
         'subtotal' => 'decimal:2',
         'shipping_cost' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'total' => 'decimal:2',
         'shipping_address' => 'array',
     ];
@@ -96,6 +100,14 @@ class Order extends Model
     public function payment(): HasOne
     {
         return $this->hasOne(Payment::class);
+    }
+
+    /**
+     * Get the coupon used for this order
+     */
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     public function getTotalFormattedAttribute(): string

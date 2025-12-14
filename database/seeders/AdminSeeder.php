@@ -10,11 +10,14 @@ class AdminSeeder extends Seeder
 {
     public function run(): void
     {
-        User::create([
-            'name' => 'Admin DistroZone',
-            'email' => 'admin@distrozone.com',
-            'password' => Hash::make('password123'),
-            'email_verified_at' => now(),
-        ]);
+        User::updateOrCreate(
+            ['email' => 'admin@distrozone.com'],
+            [
+                'name' => 'Admin DistroZone',
+                'password' => Hash::make('password123'),
+                'email_verified_at' => now(),
+                'role' => 'admin',
+            ]
+        );
     }
 }
