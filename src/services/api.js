@@ -267,6 +267,64 @@ export const adminAPI = {
     // Dashboard
     getDashboardStats: () => apiRequest('/admin/dashboard/stats'),
 
+    // Sales Reports
+    getReportSummary: (startDate, endDate) => {
+        const params = new URLSearchParams();
+        if (startDate) params.append('start_date', startDate);
+        if (endDate) params.append('end_date', endDate);
+        return apiRequest(`/admin/reports/summary?${params.toString()}`);
+    },
+    getReportChart: (startDate, endDate) => {
+        const params = new URLSearchParams();
+        if (startDate) params.append('start_date', startDate);
+        if (endDate) params.append('end_date', endDate);
+        return apiRequest(`/admin/reports/chart?${params.toString()}`);
+    },
+    getReportProducts: (startDate, endDate, limit = 10) => {
+        const params = new URLSearchParams();
+        if (startDate) params.append('start_date', startDate);
+        if (endDate) params.append('end_date', endDate);
+        params.append('limit', limit);
+        return apiRequest(`/admin/reports/products?${params.toString()}`);
+    },
+    getReportCategories: (startDate, endDate) => {
+        const params = new URLSearchParams();
+        if (startDate) params.append('start_date', startDate);
+        if (endDate) params.append('end_date', endDate);
+        return apiRequest(`/admin/reports/categories?${params.toString()}`);
+    },
+    getReportPaymentMethods: (startDate, endDate) => {
+        const params = new URLSearchParams();
+        if (startDate) params.append('start_date', startDate);
+        if (endDate) params.append('end_date', endDate);
+        return apiRequest(`/admin/reports/payment-methods?${params.toString()}`);
+    },
+    getReportOrderStatus: (startDate, endDate) => {
+        const params = new URLSearchParams();
+        if (startDate) params.append('start_date', startDate);
+        if (endDate) params.append('end_date', endDate);
+        return apiRequest(`/admin/reports/order-status?${params.toString()}`);
+    },
+    exportReportCSV: async (startDate, endDate) => {
+        const token = getToken();
+        const params = new URLSearchParams();
+        if (startDate) params.append('start_date', startDate);
+        if (endDate) params.append('end_date', endDate);
+        const response = await fetch(`${API_URL}/admin/reports/export?${params.toString()}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (!response.ok) throw new Error('Export failed');
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `sales_report_${startDate || 'all'}_to_${endDate || 'now'}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    },
+
     // Products
     getProducts: (params = {}) => {
         const query = new URLSearchParams(params).toString();

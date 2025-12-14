@@ -17,7 +17,8 @@ import {
     MessageCircle,
     FileText,
     Star,
-    Ticket
+    Ticket,
+    BarChart3
 } from 'lucide-react';
 
 const AdminLayout = () => {
@@ -89,6 +90,7 @@ const AdminLayout = () => {
         { icon: ShoppingCart, label: 'Orders', path: '/admin/orders', badge: notifications.orders },
         { icon: Users, label: 'Categories', path: '/admin/categories' },
         { icon: Ticket, label: 'Coupons', path: '/admin/coupons' },
+        { icon: BarChart3, label: 'Reports', path: '/admin/reports' },
         { icon: FileText, label: 'Posts', path: '/admin/posts' },
         { icon: Star, label: 'Reviews', path: '/admin/reviews' },
         { icon: MessageCircle, label: 'Chats', path: '/admin/chats', badge: notifications.chats },

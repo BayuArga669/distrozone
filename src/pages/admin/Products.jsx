@@ -51,6 +51,7 @@ const Products = () => {
         category_id: '',
         description: '',
         price: '',
+        cost_price: '',
         stock: '',
         color: '#cbd5e1',
         gender: 'unisex',
@@ -97,6 +98,7 @@ const Products = () => {
             const payload = {
                 ...formData,
                 price: parseFloat(formData.price),
+                cost_price: formData.cost_price ? parseFloat(formData.cost_price) : null,
                 stock: parseInt(formData.stock),
                 category_id: parseInt(formData.category_id)
             };
@@ -130,6 +132,7 @@ const Products = () => {
             category_id: product.category_id,
             description: product.description || '',
             price: product.price,
+            cost_price: product.cost_price || '',
             stock: product.stock,
             color: product.color || '#cbd5e1',
             gender: product.gender || 'unisex',
@@ -158,6 +161,7 @@ const Products = () => {
             category_id: '',
             description: '',
             price: '',
+            cost_price: '',
             stock: '',
             color: '#cbd5e1',
             gender: 'unisex',
@@ -439,7 +443,7 @@ const Products = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">Price (IDR)</label>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Harga Jual (IDR) *</label>
                                     <div className="relative">
                                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">Rp</span>
                                         <input
@@ -451,6 +455,21 @@ const Products = () => {
                                             required
                                         />
                                     </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Harga Beli (IDR)</label>
+                                    <div className="relative">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">Rp</span>
+                                        <input
+                                            type="number"
+                                            value={formData.cost_price}
+                                            onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
+                                            className="w-full pl-12 pr-4 py-3 rounded-xl bg-slate-50 border-none focus:ring-2 focus:ring-orange-500/20 text-slate-900 font-medium transition-all"
+                                            placeholder="0"
+                                        />
+                                    </div>
+                                    <p className="text-xs text-slate-400 mt-1">Untuk perhitungan margin profit</p>
                                 </div>
 
                                 <div>

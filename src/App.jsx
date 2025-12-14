@@ -32,6 +32,7 @@ import AdminLogin from './pages/admin/Login';
 import AdminReviews from './pages/admin/Reviews';
 import Settings from './pages/admin/Settings';
 import AdminCoupons from './pages/admin/Coupons';
+import AdminReports from './pages/admin/Reports';
 import AdminPosts from './pages/admin/Posts';
 import PostEditor from './pages/admin/PostEditor';
 import PostPreview from './pages/admin/PostPreview';
@@ -159,6 +160,7 @@ function App() {
               <Route path="chats" element={<AdminChats />} />
               <Route path="reviews" element={<AdminReviews />} />
               <Route path="coupons" element={<AdminCoupons />} />
+              <Route path="reports" element={<AdminReports />} />
               <Route path="posts" element={<AdminPosts />} />
               <Route path="posts/new" element={<PostEditor />} />
               <Route path="posts/:id/edit" element={<PostEditor />} />
